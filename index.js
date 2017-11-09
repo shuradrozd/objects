@@ -1,10 +1,7 @@
 import ru from './src/js/ru';
 import en from './src/js/en';
 
-
-
-
-const ruArr = [];
+    const ruArr = [];
     const enArr = [];
 
     for (let key in ru) {
@@ -14,27 +11,52 @@ const ruArr = [];
     for (let key in en) {
         enArr.push(key);
     }
-    var str = ``;
-    if (ruArr.length >= enArr.length) {
-         for (let i = 0; i < ruArr.length; i++) {
-             if (ruArr[i] != enArr[i] ) {
-                     str += `RU property ${ruArr[i]} !==  EN property ${enArr[i]} \n`;
-                 const JFile=require('jfile');
 
-                 const txtFile= new JFile('./src/js/en.js');
-                 let result = txtFile.grep('components.container.Sale.tabs.statement', true) ;
-                 console.log(result[0].i + 1);
-             }
+console.log(ruArr.length);
+console.log(enArr.length);
+
+//let str = ``;
+
+function checkProps(arr1, arr2) {
+    let str = ``;
+    if (arr1.length >= arr2.length) {
+        for (let i = 0; i < arr1.length; i++) {
+
+            for (let j = 0; j < arr2.length; j++) {
+                if (arr1[i] == arr2[j]) {
+                    arr1.splice(i, 1);
+                }
             }
-    } else {
-        for (let i = 0; i < enArr.length; i++) {
-            if (enArr[i]  != ruArr[i] ) {
-                str += `EN property ${enArr[i]} !== RU property ${ruArr[i]} \n`;
-            }
+
         }
-    }
+        let result = arr1.reduce((sum, cur)=> `${sum} + ${cur}\r\n`);
+        //console.log(result);
+        let properties = arr1.reduce((itm, cur) => itm + '\n' + cur);
+        if (properties.length > 0) {
+            str = `In dictionary EN exist property(ies): \n ${properties} \n that doesn't exist in RU dictionary`;
+        }
+        return str;
+    } else {
+        for (let i = 0; i < arr2.length; i++) {
 
-    console.log(str);
+            for (let j = 0; j < arr1.length; j++) {
+                if (arr2[i] == arr1[j]) {
+                    arr2.splice(i, 1);
+                }
+            }
+
+        }
+
+        let properties = arr2.map((itm)=>`${itm}\r\n`);
+        str = `In dictionary RU exist property(ies): \n ${properties} \n that doesn't exist in EN dictionary`;
+        return str;
+    }
+}
+
+
+console.log(checkProps(enArr, ruArr));
+
+
 
 
 
