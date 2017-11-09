@@ -1,24 +1,16 @@
-
-import ru from './src/js/ru';
-import en from './src/js/en';
-
-    const ruArr = [];
-    const enArr = [];
-    addPropToArr(en, enArr);
-    addPropToArr(ru, ruArr);
-
-
-
-    function addPropToArr(obj, arr)
-{
-    for (let key in obj) {
-        arr.push(key);
-    }
-}
-console.log(`RU DIC ${ruArr.length}`);
-console.log(`EN DIC ${enArr.length}`);
-
-function checkProps(arr1, arr2) {
+module.exports = {
+    // ru: {'components.container.Artist.User.notFound': 'Не найдено',
+    //     'mponents.container.Artist.User.meta.description': 'Страница исполнителя на Wanderbeat.'},
+    // en: {'components.container.Artist.User.notFound': 'Not found',
+    // 'components.container.Artist.User.meta.description': 'Artist page on Wanderbeat.'},
+    ruArr: [],
+    enArr: [],
+    addPropToArr: function (obj, arr) {
+        for (let key in obj) {
+            arr.push(key);
+        }
+    },
+    checkProps: function (arr1, arr2) {
     let str = ``;
     if (arr1.length >= arr2.length) {
         for (let i = 0; i < arr1.length; i++) {
@@ -56,9 +48,4 @@ function checkProps(arr1, arr2) {
     }
 }
 
-
-console.log(checkProps(enArr, ruArr));
-
-
-
-
+}

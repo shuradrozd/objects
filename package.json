@@ -15,11 +15,13 @@
     "babel-loader": "^7.1.2",
     "babel-preset-env": "^1.6.0",
     "babel-preset-stage-0": "^6.24.1",
+    "jfile": "^1.1.12",
     "webpack": "^3.6.0",
     "webpack-dev-server": "^2.8.2"
   },
   "dependencies": {
     "async": "^2.6.0",
+    "express": "^4.16.2",
     "fs": "0.0.1-security",
     "path": "^0.12.7"
   }
