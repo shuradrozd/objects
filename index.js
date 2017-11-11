@@ -60,5 +60,3 @@ function checkProps(arr1, arr2) {
 console.log(checkProps(enArr, ruArr));
 
 
-
-
