@@ -7,7 +7,6 @@ let lang;
 let langArr;
 let langObj;
 let dictionary = [];
-let crEnArr = true;
 
     for (let key in dict) {
         lang = key;
@@ -24,10 +23,10 @@ let crEnArr = true;
     }
 
     for (let i = 1; i < dictionary.length; i++) {
-        if (crEnArr) {
-            addPropToArr(dictionary[0][dictionary[0]['countryObj']], dictionary[0][dictionary[0]['countryArr']]);
-            crEnArr = false;
+        if (dictionary[0][dictionary[0]['countryArr']].length != 0) {
+            dictionary[0][dictionary[0]['countryArr']].length = 0;
         }
+            addPropToArr(dictionary[0][dictionary[0]['countryObj']], dictionary[0][dictionary[0]['countryArr']]);
             addPropToArr(dictionary[i][dictionary[i]['countryObj']], dictionary[i][dictionary[i]['countryArr']]);
 
         function addPropToArr(obj, arr) {
@@ -62,7 +61,8 @@ let crEnArr = true;
             for (let i = 0; i < arrPos1.length; i++) {
 
                 if (arrPos1[i]['position'] !== arrPos2[i]['position']) {
-                    strPos += `First asynchronized position is : ${arrPos2[i]['position']}, but should be ${arrPos1[i]['position']}`;
+                    strPos +=
+                `First asynchronized position is : ${arrPos2[i]['position']},\nbut right position in the ${dictionary[0]['country']} Dictionary is equal : ${arrPos1[i]['position']}`;
                     break;
                 } else {
                     if (arrPos1[i]['property'] !== arrPos2[i]['property']) {
@@ -76,17 +76,18 @@ let crEnArr = true;
             if (strPos) {
                 return strPos;
             } else {
-                console.log(`Strings in files are synchronized !!!`);
+                console.log(`Rows in Dictionaries are synchronized !!!`);
                 if (strProp) {
                     return strProp + `\n Could you please check this !!!`;
                 } else {
-                    return `Files are synchronized !!!`;
+                    return `Dictionaries are synchronized !!! \n  - - - - - - - - - - - - -`;
                 }
             }
+
         }
 
-        console.log(`${[dictionary[0]['country']]} DIC ${dictionary[0][dictionary[0]['countryArr']].length}`);
-        console.log(`${[dictionary[i]['country']]} DIC ${dictionary[i][dictionary[i]['countryArr']].length}`);
+        console.log(`${[dictionary[0]['country']]} Dictionary has row count =  ${dictionary[0][dictionary[0]['countryArr']].length}`);
+        console.log(`${[dictionary[i]['country']]} Dictionary has row count =  ${dictionary[i][dictionary[i]['countryArr']].length}`);
 
         function checkProps(arr1, arr2) {
             let outStr = ``;
@@ -107,7 +108,7 @@ let crEnArr = true;
                     for (let i = 0, j = 1; i < existProp.length; i++, j++) {
                         str += `${j}) ${existProp[i]['property']} in the position: ${existProp[i]['position']} \n`;
                     }
-                    outStr = `In dictionary ${dictionary[0]['country']} exist properties:\r\n${str}that doesn't exist in ${dictionary[i]['country']} dictionary`;
+                     outStr = `In dictionary ${dictionary[0]['country']} exist properties:\r\n${str}that doesn't exist in ${dictionary[i]['country']} dictionary`;
                     arr1.length = 0;
                 }
                 return outStr;
@@ -124,8 +125,7 @@ let crEnArr = true;
                 }
 
                 if (arr2.length) {
-
-                    let existProp = savePropPos(arr2, dictionary[i]['countryArr']);
+                    let existProp = savePropPos(arr2, dictionary[i]['fileName']);
                     let str = ``;
                     for (let i = 0, j = 1; i < existProp.length; i++, j++) {
                         str += `${j}) ${existProp[i]['property']} in the position: ${existProp[i]['position']} \n`;
@@ -139,7 +139,7 @@ let crEnArr = true;
 
         if (dictionary[0][dictionary[0]['countryArr']].length == dictionary[i][dictionary[i]['countryArr']].length) {
             console.log(checkSync(enArrPos, anotherArrPos));
-        } else {
+             } else {
             console.log(checkProps(dictionary[0][dictionary[0]['countryArr']], dictionary[i][dictionary[i]['countryArr']]));
         }
     }
