@@ -1,6 +1,4 @@
-//import ru from './src/js/ru';
-//import en from './src/js/en';
-//import by from './src/js/by';
+import dict from './dictionary';
 
 const fs = require("fs");
 const JFile = require('jfile');
@@ -8,61 +6,29 @@ const curDir = `./src/js/`;
 let lang;
 let langArr;
 let langObj;
-let dictionary = [{
-    country : 'en',
-    fileName: 'en.js',
-    countryArr: 'enArr',
-    enArr: [],
-    //countryObj: 'enObj',
-    //enObj: en
-}];
+let dictionary = [];
+let crEnArr = true;
 
-setTimeout( () => {
-
-    fs.readdir(curDir, function (err, files) {
-        if (err) {
-            return console.error(err);
-        }
-
-        for (let i = 0; i < files.length; i++) {
-            lang = files[i].slice(0, 2);
-            console.log(`import ${lang} from '${curDir}${lang}';`);
-            if (lang === 'en') {
-                continue;
-            }
-            langArr = files[i].slice(0, 2) + 'Arr';
-            langObj = files[i].slice(0, 2) + 'Obj';
-            let countryObj = {};
-            countryObj['country'] = lang;
-            countryObj['fileName'] = files[i];
-            countryObj['countryArr'] = langArr;
-            countryObj[`${langArr}`] = [];
-            countryObj['countryObj'] = langObj;
-            countryObj[`${langObj}`] = ru;
-            dictionary.push(countryObj);
-
-
-
-        }
-        //console.log(dictionary);
-    });
-}, 100);
-
-import ru from './src/js/ru';
-import en from './src/js/en';
-
-
-setTimeout( () => {
-
-    //const ruArr = [];
-    //const enArr = [];
-    //console.log(dictionary[0][dictionary[0]['countryArr']]);
+    for (let key in dict) {
+        lang = key;
+        langArr = key + 'Arr';
+        langObj = key + 'Obj';
+        let countryObj = {};
+        countryObj['country'] = lang;
+        countryObj['fileName'] = key + '.js';
+        countryObj['countryArr'] = langArr;
+        countryObj[`${langArr}`] = [];
+        countryObj['countryObj'] = langObj;
+        countryObj[`${langObj}`] = dict[key];
+        dictionary.push(countryObj);
+    }
 
     for (let i = 1; i < dictionary.length; i++) {
-
-        addPropToArr(en, dictionary[0][dictionary[0]['countryArr']]);
-        addPropToArr(dictionary[i][dictionary[i]['countryObj']], dictionary[i][dictionary[i]['countryArr']]);
-        //addPropToArr(ru, dictionary[1]['countryArr']);
+        if (crEnArr) {
+            addPropToArr(dictionary[0][dictionary[0]['countryObj']], dictionary[0][dictionary[0]['countryArr']]);
+            crEnArr = false;
+        }
+            addPropToArr(dictionary[i][dictionary[i]['countryObj']], dictionary[i][dictionary[i]['countryArr']]);
 
         function addPropToArr(obj, arr) {
             for (let key in obj) {
@@ -80,7 +46,6 @@ setTimeout( () => {
 
             for (let i = 0; i < arr.length; i++) {
                 result = txtFile.grep(arr[i], true);
-                //arrPos.push(result[0].i + 1);
                 arrPos.push(
                     {
                         property: arr[i],
@@ -97,30 +62,30 @@ setTimeout( () => {
             for (let i = 0; i < arrPos1.length; i++) {
 
                 if (arrPos1[i]['position'] !== arrPos2[i]['position']) {
-                    strPos += `First async position is : ${arrPos2[i]['position']}, but should be ${arrPos1[i]['position']}`;
+                    strPos += `First asynchronized position is : ${arrPos2[i]['position']}, but should be ${arrPos1[i]['position']}`;
                     break;
                 } else {
                     if (arrPos1[i]['property'] !== arrPos2[i]['property']) {
                         strProp += `
-                Property '${arrPos1[i]['property']}' on position : ${arrPos1[i]['position']},
-                doesn't equal property  '${arrPos2[i]['property']}' on position: ${arrPos2[i]['position']}
-                `;
+                                    Property '${arrPos1[i]['property']}' in the position : ${arrPos1[i]['position']},
+                                    doesn't equal property  '${arrPos2[i]['property']}' in the position: ${arrPos2[i]['position']}
+                                `;
                     }
                 }
             }
             if (strPos) {
                 return strPos;
             } else {
-                console.log(`Strings in files are sync!!!`);
+                console.log(`Strings in files are synchronized !!!`);
                 if (strProp) {
-                    return strProp + `\n Could you please check this!!!`;
+                    return strProp + `\n Could you please check this !!!`;
                 } else {
-                    return `Files are sync!!!`;
+                    return `Files are synchronized !!!`;
                 }
             }
         }
 
-        console.log(`EN DIC ${dictionary[0][dictionary[0]['countryArr']].length}`);
+        console.log(`${[dictionary[0]['country']]} DIC ${dictionary[0][dictionary[0]['countryArr']].length}`);
         console.log(`${[dictionary[i]['country']]} DIC ${dictionary[i][dictionary[i]['countryArr']].length}`);
 
         function checkProps(arr1, arr2) {
@@ -138,13 +103,12 @@ setTimeout( () => {
                 if (arr1.length) {
 
                     let existProp = savePropPos(arr1, dictionary[0]['fileName']);
-                    //let properties = arr1.reduce((prev, cur) => `${prev} \n ${cur}`);
                     let str = ``;
                     for (let i = 0, j = 1; i < existProp.length; i++, j++) {
-                        str += `${j}) ${existProp[i]['property']} on position: ${existProp[i]['position']} \n`;
+                        str += `${j}) ${existProp[i]['property']} in the position: ${existProp[i]['position']} \n`;
                     }
-                    outStr = `In dictionary ${dictionary[0]['country']} exist property(ies):\r\n${str}that doesn't exist in ${dictionary[1]['country']} dictionary`;
-                    //arr1.length = 0;
+                    outStr = `In dictionary ${dictionary[0]['country']} exist properties:\r\n${str}that doesn't exist in ${dictionary[i]['country']} dictionary`;
+                    arr1.length = 0;
                 }
                 return outStr;
 
@@ -162,13 +126,12 @@ setTimeout( () => {
                 if (arr2.length) {
 
                     let existProp = savePropPos(arr2, dictionary[i]['countryArr']);
-                    //let properties = arr1.reduce((prev, cur) => `${prev} \n ${cur}`);
                     let str = ``;
                     for (let i = 0, j = 1; i < existProp.length; i++, j++) {
-                        str += `${j}) ${existProp[i]['property']} on position: ${existProp[i]['position']} \n`;
+                        str += `${j}) ${existProp[i]['property']} in the position: ${existProp[i]['position']} \n`;
                     }
-                    outStr = `In dictionary ${dictionary[1]['country']} exist property(ies):\r\n${str}that doesn't exist in ${dictionary[0]['country']} dictionary`;
-                    //arr2.length = 0;
+                    outStr = `In dictionary ${dictionary[i]['country']} exist property(ies):\r\n${str}that doesn't exist in ${dictionary[0]['country']} dictionary`;
+                    arr2.length = 0;
                 }
                 return outStr;
             }
@@ -179,6 +142,4 @@ setTimeout( () => {
         } else {
             console.log(checkProps(dictionary[0][dictionary[0]['countryArr']], dictionary[i][dictionary[i]['countryArr']]));
         }
-
     }
-}, 500);
