@@ -1,8 +1,8 @@
 import dict from './dictionary';
-
-const fs = require("fs");
+import fs from 'fs';
+// const fs = require('fs');
 const JFile = require('jfile');
-const curDir = `./src/js/`;
+const curDir = './src/js/';
 let lang;
 let langArr;
 let langObj;
@@ -38,17 +38,39 @@ let dictionary = [];
         let enArrPos = savePropPos(dictionary[0][dictionary[0]['countryArr']], dictionary[0]['fileName']);
         let anotherArrPos = savePropPos(dictionary[i][dictionary[i]['countryArr']], dictionary[i]['fileName']);
 
+
+        function getPropPosInFile(property, fileName) {
+            let output = fs.readFileSync(fileName, 'utf8')
+            let propertyPos = [];
+            propertyPos = output.split("\r\n");
+            let end;
+            for (let i = 0; i < propertyPos.length; i++) {
+                end = propertyPos[i].indexOf(':');
+                propertyPos[i] = propertyPos[i].slice(0, end);
+            }
+
+            for (let j = 0; j < propertyPos.length; j++) {
+                if (propertyPos[j].trim() === `'${property}'`.trim()) {
+                    return j + 1;
+                    break;
+                }
+            }
+        }
+
         function savePropPos(arr, fileName) {
-            let txtFile = new JFile(`${curDir}${fileName}`);
+            //let txtFile = new JFile(`${curDir}${fileName}`);
+            let filePath =`${curDir}${fileName}`;
             let result;
             let arrPos = [];
 
             for (let i = 0; i < arr.length; i++) {
-                result = txtFile.grep(arr[i], true);
+                //result = txtFile.grep(arr[i], true);
+                result = getPropPosInFile(arr[i], filePath);
                 arrPos.push(
                     {
                         property: arr[i],
-                        position: result[0].i + 1
+                        //position: result[0].i + 1
+                        position: result,
                     }
                 )
             }
