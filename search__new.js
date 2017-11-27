@@ -1,120 +1,124 @@
 import fs from 'fs';
 import debug from 'debug';
-import dict from '../../src/common/translations/dictionary';
+// import dict from '../../src/common/translations/dictionary';
+import dictionary from './dictionary';
 
 
-const curDir = '../../src/common/assets/dictionaries/';
-const languages = Object.keys(dict).map( (key) => {
-    return {
-        country: key,
+// const currentDir = 'src/common/assets/dictionaries/';
+const currentDir = './src/js/';
+const notifications = {
+    dictionariesSynchronized: 'Dictionaries are synchronized !!! \n  - - - - - - - - - - - - -',
+    rowsSynchronized: 'Rows in Dictionaries are synchronized !!!',
+    rowsAsynchronized: (notEnDictionary, enDictionary, enLanguage) =>
+    `\nFirst asynchronous position is : ${notEnDictionary.position}, 
+but right position in the ${en} dictionary is equal : ${enDictionary.position}\n`,
+    incorrectPropertyStrings: (string) => `${string} \n Could you please check this !!!`,
+    rowsCount: (language, languageArr) => `${language} Dictionary row count =  ${languageArr.length}`
+};
+
+const languages = Object.keys(dictionary).map((key) => (
+    {
+        language: key,
         fileName: `${key}.js`,
-        countryArr: Object.keys(dict[key]).map( (item) => {
-            return item;
-        }),
-    };
-});
+        languageArr: Object.keys(dictionary[key]).map((item) => (item)),
+    }
+));
+
+function getPropertyPositionInFile(property, fileName) {
+    const rawLoadedDictionary = fs.readFileSync(fileName, 'utf8').split('\n');
+    const parsedDictionary = rawLoadedDictionary.map((item) => (item.slice(0, item.indexOf(':')).trim()));
+    return parsedDictionary.indexOf(`'${property}'`.trim()) + 1;
+}
+
+function savePropertyPositionToArr(arr, fileName) {
+    return arr.map((item) => (
+        {
+            property: item,
+            position: getPropertyPositionInFile(item, `${currentDir}${fileName}`),
+        }
+    ));
+}
+
+function checkSynchronized(arrPos1, arrPos2) {
+    const asynchronousPositionObj = arrPos2.find((v, index) => (v.position !== arrPos1[index].position));
+    const enDictionaryPositionObj = arrPos1.find((v, index) => (v.position !== arrPos2[index].position));
+    if (asynchronousPositionObj) {
+        return notifications.rowsAsynchronized(asynchronousPositionObj, enDictionaryPositionObj, en);
+    } else {
+        debug.log(notifications.rowsSynchronized);
+        const enCheckArr = arrPos1.filter((v, index) => (v.property !== arrPos2[index].property));
+        const anotherCheckArr = arrPos2.filter((v, index) => (v.property !== arrPos1[index].property));
+        function getIncorrectPropertyStrings(arr) {
+            let incorrectStrInDic = '';
+            let lineNumber = 0;
+            arr.forEach((item, index) => {
+                lineNumber++;
+                incorrectStrInDic = `${incorrectStrInDic}
+        ${lineNumber}) Property '${enCheckArr[index].property}' in ${en} dictionary at the position : ${enCheckArr[index].position},
+        doesn't equal property  '${item.property}' in ${anotherLang} dictionary at the position: ${item.position}
+                                  `;
+            });
+            return incorrectStrInDic;
+        }
+        if (anotherCheckArr.length !== 0) {
+            return notifications.incorrectPropertyStrings(getIncorrectPropertyStrings(anotherCheckArr));
+        } else {
+            return notifications.dictionariesSynchronized;
+        }
+    }
+}
+
+function checkProperties(arr1, arr2) {
+    let missedStringsInDictionary = '';
+    function getMissedStrings(arr) {
+        let missedStrings = '';
+        let lineNumber = 0;
+        arr.forEach((item) => {
+            lineNumber++;
+            missedStrings = `${missedStrings} ${lineNumber}) ${item['property']} in the position: ${item['position']} \n`;
+        });
+        return missedStrings;
+    }
+    if (arr1.length >= arr2.length) {
+        let arr = arr1.filter((item) => (!~arr2.indexOf(item)));
+        arr.concat(arr2.filter((item) => (!~arr1.indexOf(item))));
+        if (arr) {
+            const missedStingsInAnotherArr = savePropertyPositionToArr(arr, enFileName);
+            missedStringsInDictionary = `In dictionary ${en} exist property(ies):
+        \r\n${getMissedStrings(missedStingsInAnotherArr)}\nthat doesn't exist in ${anotherLang} dictionary`;
+        }
+        return missedStringsInDictionary;
+    } else {
+        let arr = arr2.filter((item) => (!~arr1.indexOf(item)));
+        arr.concat(arr1.filter((item) => (!~arr2.indexOf(item))));
+        if (arr) {
+            const missedStringsInEnArr = savePropertyPositionToArr(arr, anotherFileName);
+            missedStringsInDictionary = `In dictionary ${anotherLang} exist property(ies):
+        \r\n${getMissedStrings(missedStringsInEnArr)}\nthat doesn't exist in ${en} dictionary`;
+        }
+        return missedStringsInDictionary;
+    }
+}
+
+const en = languages[0]['language'];
+const enFileName = languages[0]['fileName'];
+const enPropertyArr = languages[0]['languageArr'];
+const enArrPropertyPosition = savePropertyPositionToArr(enPropertyArr, enFileName);
+let anotherFileName;
+let anotherLang;
 
 for (let i = 1; i < languages.length; i++) {
-    const enPropArr = languages[0]['countryArr'];
-    const enFileName = languages[0]['fileName'];
-    const en = languages[0]['country'];
-    const enArrPos = savePropPos(enPropArr, enFileName);
-    const anotherArrPos = savePropPos(languages[i]['countryArr'], languages[i]['fileName']);
+anotherLang = languages[i]['language'];
+anotherFileName = languages[i]['fileName'];
+const anotherPropertyArr = languages[i]['languageArr'];
+const anotherArrPropertyPosition = savePropertyPositionToArr(anotherPropertyArr, anotherFileName);
 
-    function getPropPosInFile(property, fileName) {
-        let propertyPos = fs.readFileSync(fileName, 'utf8').split('\n');
-        propertyPos = propertyPos.map((item) => {
-            return item.slice(0, item.indexOf(':')).trim();
-        });
-        property = `'${property}'`.trim();
-        return propertyPos.indexOf(property) + 1;
-    }
+    debug.log(notifications.rowsCount(en, enPropertyArr));
+    debug.log(notifications.rowsCount(anotherLang, anotherPropertyArr));
 
-    function savePropPos(arr, fileName) {
-        return arr.map((item) => {
-            return {
-                property: item,
-                position: getPropPosInFile(item, `${curDir}${fileName}`),
-            };
-        });
-    }
-
-    function checkSync(arrPos1, arrPos2) {
-        let strPos = '';
-        let strProp = '';
-        for (let i = 0; i < arrPos1.length; i++) {
-            if (arrPos1[i]['position'] !== arrPos2[i]['position']) {
-                strPos +=
-                    `First asynchronous position is : ${arrPos2[i]['position']},
-                     \nbut right position in the ${en} dictionary is equal : ${arrPos1[i]['position']}`;
-                break;
-            } else {
-                if (arrPos1[i]['property'] !== arrPos2[i]['property']) {
-                    strProp += `
-                    Property '${arrPos1[i]['property']}' in the position : ${arrPos1[i]['position']},
-                    doesn't equal property  '${arrPos2[i]['property']}' in the position: ${arrPos2[i]['position']}
-                                `;
-                }
-            }
-        }
-        if (strPos) {
-            return strPos;
-        } else {
-            debug.log('Rows in Dictionaries are synchronized !!!');
-            if (strProp) {
-                return `${strProp} \n Could you please check this !!!`;
-            } else {
-                return 'Dictionaries are synchronized !!! \n  - - - - - - - - - - - - -';
-            }
-        }
-    }
-    debug.log(`${en} Dic row count =  ${enPropArr.length}`);
-    debug.log(`${[languages[i]['country']]} Dic row count =  ${languages[i]['countryArr'].length}`);
-
-    function checkProps(arr1, arr2) {
-        let outStr = '';
-        function getStr(arr) {
-            let str = '';
-            let j = 0;
-            arr.forEach((item)=> {
-                j++;
-                str += `${j}) ${item['property']} in the position: ${item['position']} \n`;
-            });
-            return str;
-        }
-
-        if (arr1.length >= arr2.length) {
-            let arr = arr1.filter((item)=> {
-                return !~arr2.indexOf(item);
-            });
-            arr.concat(arr2.filter((item)=> {
-                return !~arr1.indexOf(item);
-            }));
-            if (arr) {
-                let existProp = savePropPos(arr, languages[0]['fileName']);
-                outStr = `In dictionary ${en} exist property(ies):
-                \r\n${getStr(existProp)}that doesn't exist in ${languages[i]['country']} dictionary`;
-            }
-            return outStr;
-        } else {
-            let arr = arr2.filter((item)=> {
-                return !~arr1.indexOf(item);
-            });
-            arr.concat(arr1.filter((item)=> {
-                return !~arr2.indexOf(item);
-            }));
-            if (arr) {
-                let existProp = savePropPos(arr, languages[i]['fileName']);
-                outStr = `In dictionary ${languages[i]['country']} exist property(ies):
-                 \r\n${getStr(existProp)}that doesn't exist in ${en} dictionary`;
-            }
-            return outStr;
-        }
-    }
-
-    if (enPropArr.length == languages[i]['countryArr'].length) {
-        debug.log(checkSync(enArrPos, anotherArrPos));
+    if (enPropertyArr.length == anotherPropertyArr.length) {
+        debug.log(checkSynchronized(enArrPropertyPosition, anotherArrPropertyPosition));
     } else {
-        debug.log(checkProps(enPropArr, languages[i]['countryArr']));
+        debug.log(checkProperties(enPropertyArr, anotherPropertyArr));
     }
 }
