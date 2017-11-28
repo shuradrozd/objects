@@ -1,21 +1,20 @@
 import fs from 'fs';
 import debug from 'debug';
-// import dict from '../../src/common/translations/dictionary';
-import dictionary from './dictionary';
+import dictionary from '../../src/common/translations/dictionary';
 
 
-// const currentDir = 'src/common/assets/dictionaries/';
-const currentDir = './src/js/';
+const currentDir = 'src/common/assets/dictionaries/';
 const notifications = {
     dictionariesSynchronized: 'Dictionaries are synchronized !!! \n  - - - - - - - - - - - - -',
     rowsSynchronized: 'Rows in Dictionaries are synchronized !!!',
-    rowsAsynchronized: (notEnDictionary, enDictionary, enLanguage) =>
-    `\nFirst asynchronous position is : ${notEnDictionary.position}, 
-but right position in the ${en} dictionary is equal : ${enDictionary.position}\n`,
+    rowsAsynchronized: (etalonDictionary, secondaryDictionary, etalonLanguage, secondaryLanguage) =>
+        `\nFirst asynchronous position in ${secondaryLanguage} file is : ${secondaryDictionary.position}, 
+but right position in the ${etalonLanguage} file is equal : ${etalonDictionary.position}\n`,
     incorrectPropertyStrings: (string) => `${string} \n Could you please check this !!!`,
-    rowsCount: (language, languageArr) => `${language} Dictionary row count =  ${languageArr.length}`
+    rowsCount: (language, languageArr) => `${language} Dictionary row count =  ${languageArr.length}`,
+    missedPropertyStrings: (firstLanguage, secondLanguage, string) => `In file ${firstLanguage} exist property(ies):
+        \r\n${string}\nthat doesn't exist in ${secondLanguage} file`,
 };
-
 const languages = Object.keys(dictionary).map((key) => (
     {
         language: key,
@@ -39,86 +38,79 @@ function savePropertyPositionToArr(arr, fileName) {
     ));
 }
 
+function getIncorrectPropertyStrings(etalonArr, secondaryArr) {
+    let lineNumber = 0;
+    return secondaryArr.reduce((prev, item, index) => {
+        return `${prev}
+        ${++lineNumber}) Property '${etalonArr[index].property}' in ${etalonLang} file, position : ${etalonArr[index].position},
+        doesn't equal property '${item.property}' in ${secondaryLang} file, position: ${item.position}
+                                  `;
+    }, ``);
+}
+
 function checkSynchronized(arrPos1, arrPos2) {
     const asynchronousPositionObj = arrPos2.find((v, index) => (v.position !== arrPos1[index].position));
-    const enDictionaryPositionObj = arrPos1.find((v, index) => (v.position !== arrPos2[index].position));
+    const etalonDictionaryPositionObj = arrPos1.find((v, index) => (v.position !== arrPos2[index].position));
+
     if (asynchronousPositionObj) {
-        return notifications.rowsAsynchronized(asynchronousPositionObj, enDictionaryPositionObj, en);
+        return notifications.rowsAsynchronized(etalonDictionaryPositionObj, asynchronousPositionObj, etalonLang, secondaryLang);
     } else {
         debug.log(notifications.rowsSynchronized);
-        const enCheckArr = arrPos1.filter((v, index) => (v.property !== arrPos2[index].property));
-        const anotherCheckArr = arrPos2.filter((v, index) => (v.property !== arrPos1[index].property));
-        function getIncorrectPropertyStrings(arr) {
-            let incorrectStrInDic = '';
-            let lineNumber = 0;
-            arr.forEach((item, index) => {
-                lineNumber++;
-                incorrectStrInDic = `${incorrectStrInDic}
-        ${lineNumber}) Property '${enCheckArr[index].property}' in ${en} dictionary at the position : ${enCheckArr[index].position},
-        doesn't equal property  '${item.property}' in ${anotherLang} dictionary at the position: ${item.position}
-                                  `;
-            });
-            return incorrectStrInDic;
-        }
-        if (anotherCheckArr.length !== 0) {
-            return notifications.incorrectPropertyStrings(getIncorrectPropertyStrings(anotherCheckArr));
+        const etalonCheckArr = arrPos1.filter((v, index) => (v.property !== arrPos2[index].property));
+        const secondaryCheckArr = arrPos2.filter((v, index) => (v.property !== arrPos1[index].property));
+
+        if (secondaryCheckArr.length !== 0) {
+           return notifications.incorrectPropertyStrings(getIncorrectPropertyStrings(etalonCheckArr,secondaryCheckArr));
         } else {
-            return notifications.dictionariesSynchronized;
+           return notifications.dictionariesSynchronized;
         }
     }
 }
 
+function getMissedStrings(arr) {
+    let lineNumber = 0;
+    return arr.reduce((prev, item) => {
+    return `${prev} ${++lineNumber}) ${item['property']} in the position: ${item['position']} \n`;
+    }, ``);
+}
+
 function checkProperties(arr1, arr2) {
-    let missedStringsInDictionary = '';
-    function getMissedStrings(arr) {
-        let missedStrings = '';
-        let lineNumber = 0;
-        arr.forEach((item) => {
-            lineNumber++;
-            missedStrings = `${missedStrings} ${lineNumber}) ${item['property']} in the position: ${item['position']} \n`;
-        });
-        return missedStrings;
-    }
     if (arr1.length >= arr2.length) {
         let arr = arr1.filter((item) => (!~arr2.indexOf(item)));
         arr.concat(arr2.filter((item) => (!~arr1.indexOf(item))));
         if (arr) {
-            const missedStingsInAnotherArr = savePropertyPositionToArr(arr, enFileName);
-            missedStringsInDictionary = `In dictionary ${en} exist property(ies):
-        \r\n${getMissedStrings(missedStingsInAnotherArr)}\nthat doesn't exist in ${anotherLang} dictionary`;
+            const misStringsInSecArr = savePropertyPositionToArr(arr, etalonFileName);
+            return notifications.missedPropertyStrings(etalonLang, secondaryLang, getMissedStrings(misStringsInSecArr));
         }
-        return missedStringsInDictionary;
     } else {
         let arr = arr2.filter((item) => (!~arr1.indexOf(item)));
         arr.concat(arr1.filter((item) => (!~arr2.indexOf(item))));
         if (arr) {
-            const missedStringsInEnArr = savePropertyPositionToArr(arr, anotherFileName);
-            missedStringsInDictionary = `In dictionary ${anotherLang} exist property(ies):
-        \r\n${getMissedStrings(missedStringsInEnArr)}\nthat doesn't exist in ${en} dictionary`;
+            const misStringsInEtArr = savePropertyPositionToArr(arr, secondaryFileName);
+            return notifications.missedPropertyStrings(secondaryLang, etalonLang, getMissedStrings(misStringsInEtArr));
         }
-        return missedStringsInDictionary;
     }
 }
 
-const en = languages[0]['language'];
-const enFileName = languages[0]['fileName'];
-const enPropertyArr = languages[0]['languageArr'];
-const enArrPropertyPosition = savePropertyPositionToArr(enPropertyArr, enFileName);
-let anotherFileName;
-let anotherLang;
+const etalonLang = languages[0]['language'];
+const etalonFileName = languages[0]['fileName'];
+const etalonPropertyArr = languages[0]['languageArr'];
+const etalonArrPropertyPosition = savePropertyPositionToArr(etalonPropertyArr, etalonFileName);
+let secondaryFileName;
+let secondaryLang;
 
 for (let i = 1; i < languages.length; i++) {
-anotherLang = languages[i]['language'];
-anotherFileName = languages[i]['fileName'];
-const anotherPropertyArr = languages[i]['languageArr'];
-const anotherArrPropertyPosition = savePropertyPositionToArr(anotherPropertyArr, anotherFileName);
+    secondaryLang = languages[i]['language'];
+    secondaryFileName = languages[i]['fileName'];
+    const secondaryPropertyArr = languages[i]['languageArr'];
+    const secondaryArrPropertyPosition = savePropertyPositionToArr(secondaryPropertyArr, secondaryFileName);
 
-    debug.log(notifications.rowsCount(en, enPropertyArr));
-    debug.log(notifications.rowsCount(anotherLang, anotherPropertyArr));
+    debug.log(notifications.rowsCount(etalonLang, etalonPropertyArr));
+    debug.log(notifications.rowsCount(secondaryLang, secondaryPropertyArr));
 
-    if (enPropertyArr.length == anotherPropertyArr.length) {
-        debug.log(checkSynchronized(enArrPropertyPosition, anotherArrPropertyPosition));
+    if (etalonPropertyArr.length == secondaryPropertyArr.length) {
+        debug.log(checkSynchronized(etalonArrPropertyPosition, secondaryArrPropertyPosition));
     } else {
-        debug.log(checkProperties(enPropertyArr, anotherPropertyArr));
+        debug.log(checkProperties(etalonPropertyArr, secondaryPropertyArr));
     }
 }
