@@ -6,13 +6,10 @@ import dictionary from '../../src/common/translations/dictionary';
 const currentDir = 'src/common/assets/dictionaries/';
 
 const notifications = {
-    dictionariesSynchronized: 'Dictionaries are synchronized !!! \n  - - - - - - - - - - - - -',
-    rowsSynchronized: 'Rows in Dictionaries are synchronized !!!',
     rowsAsynchronized: (etalonDictionaryPosition, secondaryDictionaryPosition, etalonLanguage, secondaryLanguage) =>
         `\nFirst asynchronous position in "${secondaryLanguage}" file is : ${secondaryDictionaryPosition}, 
 but right position in the "${etalonLanguage}" file is equal : ${etalonDictionaryPosition}\n`,
     incorrectPropertyStrings: (string) => `${string} \n Could you please check this !!!`,
-    rowsCount: (language, languageArrLength) => `${language} Dictionary row count =  ${languageArrLength}`,
     missedPropertyStrings: (firstLanguage, secondLanguage, string) => `In file "${firstLanguage}" exist property(ies):
   \n${string}\nthat doesn't exist in "${secondLanguage}" file`,
     incorrectPropertyInSyncStrings: (string, secondaryLangArrProperty, secondaryLangArrPosition, lineNumber, etalonLangArrProperty, etalonLangArrPosition, etalonLanguage, secondaryLanguage) => `${string}
@@ -20,6 +17,7 @@ but right position in the "${etalonLanguage}" file is equal : ${etalonDictionary
   doesn't equal property '${secondaryLangArrProperty}' in "${secondaryLanguage}" file, position: ${secondaryLangArrPosition}\n`,
     missedStrings: (string, elementArrProperty, elementArrPosition, lineNumber) => `${string} ${lineNumber}) ${elementArrProperty} in the position: ${elementArrPosition} \n`,
 };
+
 const languages = Object.keys(dictionary).map((key) => (
     {
         language: key,
@@ -56,14 +54,13 @@ function checkSynchronized(etalonArrPos, secondaryArrPos, etalonLanguage, second
         return notifications.rowsAsynchronized(etalonPositionObj.position, asynchronousPositionObj.position, etalonLanguage, secondaryLanguage);
     }
     if (!asynchronousPositionObj) {
-        debug.log(notifications.rowsSynchronized);
         const etalonCheckArr = etalonArrPos.filter((item, index) => (item.property !== secondaryArrPos[index].property));
         const secondaryCheckArr = secondaryArrPos.filter((item, index) => (item.property !== etalonArrPos[index].property));
 
         if (secondaryCheckArr.length !== 0) {
             return notifications.incorrectPropertyStrings(getIncorrectPropertyStrings(etalonCheckArr, secondaryCheckArr, etalonLanguage, secondaryLanguage));
         }
-        return notifications.dictionariesSynchronized;
+        return '';
     }
 }
 
@@ -101,13 +98,10 @@ languages.map((item) => {
         const secondaryPropertyArr = item.languageArr;
         const secondaryArrPropertyPosition = savePropertyPositionToArr(secondaryPropertyArr, secondaryFileName);
 
-        debug.log(notifications.rowsCount(etalonLang, etalonPropertyArr.length));
-        debug.log(notifications.rowsCount(secondaryLang, secondaryPropertyArr.length));
-
         if (etalonPropertyArr.length === secondaryPropertyArr.length) {
-            debug.log(checkSynchronized(etalonArrPropertyPosition, secondaryArrPropertyPosition, etalonLang, secondaryLang));
+            throw new Error(checkSynchronized(etalonArrPropertyPosition, secondaryArrPropertyPosition, etalonLang, secondaryLang));
         } else {
-            debug.log(checkProperties(etalonPropertyArr, secondaryPropertyArr, etalonLang, secondaryLang, etalonFileName, secondaryFileName));
+            throw new Error(checkProperties(etalonPropertyArr, secondaryPropertyArr, etalonLang, secondaryLang, etalonFileName, secondaryFileName));
         }
     }
 });
